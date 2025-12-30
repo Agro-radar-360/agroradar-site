@@ -1,112 +1,55 @@
+
+
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface Article {
-  id: string;
-  title: string;
-  summary: string;
-  category: string;
-  image: string;
-  date: string;
-  author: string;
-  readTime: string;
+  id?: string;
+  title?: string;
+  summary?: string;
+  category?: string;
+  image?: string;
+  date?: string;
+  author?: string;
+  readTime?: string;
 }
 
-const articles: Article[] = [
-  {
-    id: '1',
-    title: 'Safra de Soja 2024 atinge recorde histórico',
-    summary: 'Produção de soja bate novo recorde com 140 milhões de toneladas. Clima favorável e tecnologia agrícola impulsionam resultado.',
-    category: 'Grãos',
-    image: 'https://images.pexels.com/photos/4249210/pexels-photo-4249210.jpeg?w=800&q=80',
-    date: '22 de Dezembro, 2024',
-    author: 'João Silva',
-    readTime: '5 min',
-  },
-  {
-    id: '2',
-    title: 'Preços do milho sobem 15% em dezembro',
-    summary: 'Redução de oferta global faz preços do milho alcançarem maior nível em 6 meses. Agricultores aguardam melhor momento para venda.',
-    category: 'Mercado',
-    image: 'https://images.pexels.com/photos/5632640/pexels-photo-5632640.jpeg?w=800&q=80',
-    date: '21 de Dezembro, 2024',
-    author: 'Maria Santos',
-    readTime: '4 min',
-  },
-  {
-    id: '3',
-    title: 'Drones revolucionam o plantio de precisão',
-    summary: 'Novas tecnologias de drones reduzem desperdício de insumos em até 30%. Agricultura 4.0 avança no Brasil.',
-    category: 'Tecnologia',
-    image: 'https://images.pexels.com/photos/5632649/pexels-photo-5632649.jpeg?w=800&q=80',
-    date: '20 de Dezembro, 2024',
-    author: 'Carlos Oliveira',
-    readTime: '6 min',
-  },
-  {
-    id: '4',
-    title: 'Agronegócio cresce 12% em 2024',
-    summary: 'Setor registra melhor desempenho em 5 anos com exportações de commodities em alta. Perspectivas positivas para 2025.',
-    category: 'Economia',
-    image: 'https://images.pexels.com/photos/533189/pexels-photo-533189.jpeg?w=800&q=80',
-    date: '19 de Dezembro, 2024',
-    author: 'Ana Costa',
-    readTime: '7 min',
-  },
-  {
-    id: '5',
-    title: 'Agricultura orgânica avança no Brasil',
-    summary: 'Produção de alimentos orgânicos cresce 18% anualmente. Consumidores buscam cada vez mais alimentos sustentáveis.',
-    category: 'Sustentabilidade',
-    image: 'https://images.pexels.com/photos/6745164/pexels-photo-6745164.jpeg?w=800&q=80',
-    date: '18 de Dezembro, 2024',
-    author: 'Roberto Ferreira',
-    readTime: '5 min',
-  },
-  {
-    id: '6',
-    title: 'Nova variedade de trigo resiste à seca',
-    summary: 'Cientistas desenvolvem variedade de trigo que reduz consumo de água em 40%. Potencial revolucionário para regiões áridas.',
-    category: 'Grãos',
-    image: 'https://images.pexels.com/photos/4201994/pexels-photo-4201994.jpeg?w=800&q=80',
-    date: '17 de Dezembro, 2024',
-    author: 'Lucia Martins',
-    readTime: '6 min',
-  },
-];
-
-const categories = ['Todos', 'Grãos', 'Mercado', 'Tecnologia', 'Economia', 'Sustentabilidade'];
+// categorias serão derivadas dinamicamente a partir dos artigos
 
 function ArticleCard({ article }: { article: Article }) {
+  const imageSrc =
+    article.image ||
+    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAAA';
+
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
       <div className="relative h-48 overflow-hidden bg-gray-200">
         <img
-          src={article.image}
-          alt={article.title}
+          src={imageSrc}
+          alt={article.title || 'Artigo'}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-3 right-3">
           <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-            {article.category}
+            {article.category || 'Agronegócio'}
           </span>
         </div>
       </div>
       <div className="p-4">
         <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2">
-          {article.title}
+          {article.title || 'Sem título'}
         </h3>
         <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-          {article.summary}
+          {article.summary || 'Sem resumo disponível.'}
         </p>
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex gap-2">
-            <span>{article.author}</span>
+            <span>{article.author || 'Autor desconhecido'}</span>
             <span>•</span>
-            <span>{article.readTime}</span>
+            <span>{article.readTime || '—'}</span>
           </div>
-          <span>{article.date}</span>
+          <span>{article.date || ''}</span>
         </div>
       </div>
     </div>
@@ -115,11 +58,74 @@ function ArticleCard({ article }: { article: Article }) {
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of articles) {
+      if (a?.category) set.add(a.category);
+    }
+    return ['Todos', ...Array.from(set).sort()];
+  }, [articles]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let canceled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const base = process.env.NEXT_PUBLIC_API_URL;
+        if (!base) {
+          throw new Error('NEXT_PUBLIC_API_URL não definida');
+        }
+
+        const res = await fetch(`${base}/api/articles?limit=10`, {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Falha ao carregar artigos (status ${res.status})`);
+        }
+
+        const json = await res.json();
+        const apiArticles = Array.isArray(json?.articles) ? json.articles : [];
+        if (!canceled) {
+          setArticles(apiArticles as Article[]);
+        }
+      } catch (err: any) {
+        if (!canceled && err?.name !== 'AbortError') {
+          setError(err?.message || 'Erro ao carregar artigos');
+        }
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+    return () => {
+      canceled = true;
+      controller.abort();
+    };
+  }, []);
 
   const filteredArticles =
     selectedCategory === 'Todos'
       ? articles
       : articles.filter((a) => a.category === selectedCategory);
+
+  useEffect(() => {
+    if (selectedCategory !== 'Todos' && !categories.includes(selectedCategory)) {
+      setSelectedCategory('Todos');
+    }
+  }, [categories, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,6 +164,18 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Estados de carregamento/erro */}
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">Carregando artigos...</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-600 text-lg">{error}</p>
+          </div>
+        )}
+
         {/* Articles Grid */}
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -168,10 +186,10 @@ export default function Home() {
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>
-          {filteredArticles.length === 0 && (
+          {!loading && !error && filteredArticles.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">
-                Nenhum artigo encontrado nesta categoria.
+                Nenhum artigo disponível no momento.
               </p>
             </div>
           )}
