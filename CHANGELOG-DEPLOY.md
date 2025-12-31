@@ -1,5 +1,70 @@
 # Histórico de Alterações - Deploy Frontend
 
+## 2025-12-31 - CORREÇÃO URGENTE: CSS Incompleto (Tailwind 4.x)
+
+### 🚨 Problema
+Site ficou **completamente desconfigurado** após deploy:
+- ❌ Sem cores (header verde, botões)
+- ❌ Sem tamanhos de texto (text-4xl, text-2xl)
+- ❌ Sem espaçamentos (padding, margin)
+- ❌ Sem layouts (grid, flex)
+
+### 🔍 Causa Raiz
+**Tailwind 4.x com @tailwindcss/postcss gera CSS incompleto:**
+
+```bash
+# CSS gerado: apenas 2.5KB
+# Faltando: bg-gray-50, bg-green-600, text-4xl, py-8, gap-3, etc
+```
+
+**Análise:**
+```bash
+$ grep "bg-green-600" out/_next/static/chunks/*.css
+# (vazio) - classe não existe!
+```
+
+### ✅ Solução Implementada (Commit 894f07c)
+
+**Downgrade: Tailwind 4.x → 3.4.17 (estável)**
+
+```bash
+npm uninstall tailwindcss @tailwindcss/postcss
+npm install -D tailwindcss@3.4.17 postcss@8.4.49 autoprefixer@10.4.20
+```
+
+**postcss.config.js:**
+```js
+// ANTES (Tailwind 4.x - QUEBRADO)
+'@tailwindcss/postcss': {}
+
+// DEPOIS (Tailwind 3.x - CORRETO)
+tailwindcss: {},
+autoprefixer: {},
+```
+
+### 📊 Comparação
+
+| Métrica | Tailwind 4.x | Tailwind 3.4.17 |
+|---------|--------------|-----------------|
+| CSS Size | 2.5KB | **10KB+** |
+| bg-green-600 | ❌ Ausente | ✅ Presente |
+| text-4xl | ❌ Ausente | ✅ Presente |
+| Formatação | ❌ Quebrada | ✅ OK |
+
+### 🧪 Validação
+
+```bash
+# Verificar classes no CSS
+grep "bg-green-600" out/_next/static/chunks/*.css
+# ✅ .bg-green-600{--tw-bg-opacity:1;background-color:rgb(22 163 74...}
+
+# Tamanho do CSS
+ls -lh out/_next/static/chunks/*.css
+# ✅ 259c423f5adb411a.css: 10KB (completo)
+```
+
+---
+
 ## 2025-12-31 - CORREÇÃO CRÍTICA: 404 Netlify Resolvido
 
 ### 🚨 Problema
