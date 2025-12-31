@@ -6,13 +6,6 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Redirect all requests to index.html for SPA behavior
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-
 # Security headers
 [[headers]]
   for = "/*"
