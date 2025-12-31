@@ -79,12 +79,9 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        const base = process.env.NEXT_PUBLIC_API_URL;
-        if (!base) {
-          throw new Error('NEXT_PUBLIC_API_URL não definida');
-        }
+        const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
 
-        const res = await fetch(`${base}/api/articles?limit=10`, {
+        const res = await fetch(`${BACKEND_URL}/api/articles?limit=10`, {
           signal: controller.signal,
           headers: { Accept: 'application/json' },
         });
@@ -94,7 +91,26 @@ export default function Home() {
         }
 
         const json = await res.json();
-        const apiArticles = Array.isArray(json?.articles) ? json.articles : [];
+        const apiArticles = Array.isArray(json?.articles)
+          ? json.articles.map((a: any) => ({
+              id: a.id,
+              title: a.title,
+              summary: a.content
+                ? a.content.substring(0, 150) + (a.content.length > 150 ? '...' : '')
+                : 'Sem resumo',
+              category: a.category || 'Agronegócio',
+              image: a.image,
+              date: a.published_at
+                ? new Date(a.published_at).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                  })
+                : '',
+              author: 'AGRO-RADAR',
+              readTime: '3 min',
+            }))
+          : [];
         if (!canceled) {
           setArticles(apiArticles as Article[]);
         }
