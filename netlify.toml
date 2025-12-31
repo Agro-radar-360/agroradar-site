@@ -5,6 +5,10 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  
+# Disable Next.js Runtime - use pure static export
+[context.production]
+  command = "npm run build"
 
 # Security headers
 [[headers]]
