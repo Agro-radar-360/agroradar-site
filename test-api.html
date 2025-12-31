@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test API</title>
+</head>
+<body>
+  <h1>Teste API Render</h1>
+  <button onclick="testAPI()">Testar API</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function testAPI() {
+      const result = document.getElementById('result');
+      result.textContent = 'Carregando...';
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const res = await fetch('https://agro-radar-360-3-0.onrender.com/api/articles?limit=10', {
+          signal: controller.signal,
+          headers: { 
+            'Accept': 'application/json',
+            'Origin': 'https://agroradar360.com.br'
+          },
+        });
+        
+        clearTimeout(timeoutId);
+        
+        result.textContent = `Status: ${res.status}\n`;
+        result.textContent += `Content-Type: ${res.headers.get('content-type')}\n\n`;
+        
+        const text = await res.text();
+        result.textContent += `Response (first 500 chars):\n${text.substring(0, 500)}`;
+        
+      } catch (err) {
+        result.textContent = `Erro: ${err.message}\n${err.stack}`;
+      }
+    }
+  </script>
+</body>
+</html>
