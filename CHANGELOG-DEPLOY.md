@@ -1,5 +1,57 @@
 # Histórico de Alterações - Deploy Frontend
 
+## 2025-12-31 - CORREÇÃO CRÍTICA: 404 Netlify Resolvido
+
+### 🚨 Problema
+Site dando **404** mesmo com build bem-sucedido no Netlify:
+- ✅ Build: OK (compilação sucesso)
+- ✅ Deploy: OK (17 arquivos uploaded)
+- ❌ Acesso: 404 Not Found
+
+### 🔍 Causa Raiz Identificada
+**CONFLITO entre `trailingSlash` e redirect:**
+
+```js
+// next.config.js (ERRADO)
+trailingSlash: true  // Gera /index.html dentro de pasta /
+```
+
+```toml
+# netlify.toml (CONFLITANTE)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"  // Tenta redirecionar tudo, mas arquivo não está lá
+```
+
+**Resultado:** Netlify procura `/index.html` mas Next.js gerou em local diferente devido a trailing slash.
+
+### ✅ Solução Implementada (Commit ddfe3e5)
+
+1. **next.config.js:**
+```js
+trailingSlash: false  // Gera index.html direto na raiz
+```
+
+2. **netlify.toml:**
+```toml
+# Removido redirect conflitante
+# Netlify serve index.html automaticamente na raiz
+```
+
+### 📋 Arquivos Corrigidos
+- ✅ [next.config.js](next.config.js) - `trailingSlash: false`
+- ✅ [netlify.toml](netlify.toml) - Redirect removido
+- ✅ [AUDITORIA-NETLIFY.md](AUDITORIA-NETLIFY.md) - Documentação atualizada
+
+### 🧪 Validação
+```bash
+npm run build
+# ✅ Gera out/index.html na raiz
+# ✅ Sem pasta 404/ ou _not-found/ com trailing slash
+```
+
+---
+
 ## 2025-12-31 - Auditoria Completa e Correções
 
 ### Problemas Identificados

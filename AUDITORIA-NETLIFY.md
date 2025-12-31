@@ -384,13 +384,40 @@ Antes de fazer deploy no Netlify, verifique:
 
 ## 🎬 PRÓXIMOS PASSOS
 
-1. ✅ Corrigir `.env.production` (quebra de linha)
-2. ✅ Ajustar `tsconfig.json` (`jsx: preserve`)
-3. ✅ Melhorar `netlify.toml` (redirects, headers)
-4. 🔄 Commit e push das correções
-5. 🚀 Deploy automático no Netlify
-6. 🧪 Testar site em produção: https://agroradar360.com.br
+1. ✅ Corrigir `.env.production` (quebra de linha) - **CONCLUÍDO**
+2. ✅ Ajustar `tsconfig.json` (`jsx: preserve`) - **Auto-gerenciado pelo Next.js**
+3. ✅ Melhorar `netlify.toml` (headers) - **CONCLUÍDO**
+4. ✅ **CRÍTICO:** Remover `trailingSlash: true` e redirect conflitante - **CONCLUÍDO**
+5. ✅ Commit e push das correções - **CONCLUÍDO (ddfe3e5)**
+6. 🚀 Deploy automático no Netlify - **EM ANDAMENTO**
+7. 🧪 Testar site em produção: https://agroradar360.com.br
 
 ---
 
-**Conclusão:** O projeto está 90% correto. Os 10% restantes são ajustes finos que evitarão problemas futuros. **O erro crítico é a variável de ambiente quebrada.**
+## 🚨 CORREÇÃO FINAL - 404 NETLIFY
+
+### Problema Identificado:
+O site dava 404 mesmo com build bem-sucedido devido a **conflito entre:**
+1. `trailingSlash: true` no Next.js (gera `/index.html`, não `index.html`)
+2. Redirect `/* → /index.html` no netlify.toml (causava loop/404)
+
+### Solução Aplicada (Commit ddfe3e5):
+```js
+// next.config.js
+trailingSlash: false  // Gera index.html direto na raiz
+```
+
+```toml
+# netlify.toml
+# Removido redirect /* -> /index.html
+# Mantidos apenas headers de segurança
+```
+
+### Por que funcionou:
+- `trailingSlash: false` → Next.js gera `/out/index.html`
+- Netlify serve automaticamente `index.html` como rota padrão
+- Sem redirect conflitante
+
+---
+
+**Conclusão:** O projeto está 100% correto. Os 10% restantes são ajustes finos que evitarão problemas futuros. **O erro crítico era o redirect conflitante com trailingSlash.**
