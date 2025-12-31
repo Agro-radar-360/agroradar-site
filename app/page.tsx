@@ -15,6 +15,37 @@ interface Article {
   readTime?: string;
 }
 
+// Artigos de fallback caso a API falhe
+const FALLBACK_ARTICLES: Article[] = [
+  {
+    id: '1',
+    title: 'Inovações em Agricultura de Precisão',
+    summary: 'Descubra como tecnologias de ponta estão transformando o agronegócio brasileiro com dados em tempo real...',
+    category: 'Tecnologia',
+    date: '31/12/24',
+    author: 'AGRO-RADAR',
+    readTime: '3 min',
+  },
+  {
+    id: '2',
+    title: 'Mercado de Commodities: Tendências 2025',
+    summary: 'Análise completa das perspectivas para soja, milho e café no mercado internacional...',
+    category: 'Mercado',
+    date: '30/12/24',
+    author: 'AGRO-RADAR',
+    readTime: '4 min',
+  },
+  {
+    id: '3',
+    title: 'Sustentabilidade no Campo',
+    summary: 'Práticas sustentáveis que aumentam a produtividade e preservam o meio ambiente...',
+    category: 'Sustentabilidade',
+    date: '29/12/24',
+    author: 'AGRO-RADAR',
+    readTime: '3 min',
+  },
+];
+
 // categorias serão derivadas dinamicamente a partir dos artigos
 
 function ArticleCard({ article }: { article: Article }) {
@@ -73,6 +104,7 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
     let canceled = false;
+    let timeoutId: NodeJS.Timeout;
 
     async function load() {
       try {
@@ -81,13 +113,23 @@ export default function Home() {
 
         const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
 
+        // Timeout de 10 segundos
+        timeoutId = setTimeout(() => controller.abort(), 10000);
+
         const res = await fetch(`${BACKEND_URL}/api/articles?limit=10`, {
           signal: controller.signal,
           headers: { Accept: 'application/json' },
         });
 
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
           throw new Error(`Falha ao carregar artigos (status ${res.status})`);
+        }
+
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('API retornou resposta inválida (esperado JSON)');
         }
 
         const json = await res.json();
@@ -112,16 +154,26 @@ export default function Home() {
             }))
           : [];
         if (!canceled) {
-          setArticles(apiArticles as Article[]);
+          setArticles(apiArticles.length > 0 ? apiArticles as Article[] : FALLBACK_ARTICLES);
         }
       } catch (err: any) {
-        if (!canceled && err?.name !== 'AbortError') {
-          setError(err?.message || 'Erro ao carregar artigos');
+        if (!canceled) {
+          // Usar artigos de fallback em caso de erro
+          setArticles(FALLBACK_ARTICLES);
+          
+          if (err?.name === 'AbortError') {
+            setError('A API demorou muito para responder. Mostrando artigos de exemplo.');
+          } else if (err?.message?.includes('JSON')) {
+            setError('Erro ao processar resposta da API. Mostrando artigos de exemplo.');
+          } else {
+            setError(err?.message || 'Erro ao carregar artigos. Mostrando artigos de exemplo.');
+          }
         }
       } finally {
         if (!canceled) {
           setLoading(false);
         }
+        clearTimeout(timeoutId);
       }
     }
 
@@ -129,6 +181,7 @@ export default function Home() {
     return () => {
       canceled = true;
       controller.abort();
+      clearTimeout(timeoutId);
     };
   }, []);
 
