@@ -113,8 +113,8 @@ export default function Home() {
 
         const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
 
-        // Timeout de 10 segundos
-        timeoutId = setTimeout(() => controller.abort(), 10000);
+        // Timeout de 30 segundos
+        timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const res = await fetch(`${BACKEND_URL}/api/articles?limit=10`, {
           signal: controller.signal,
@@ -160,7 +160,11 @@ export default function Home() {
         if (!canceled) {
           // Usar artigos de fallback em caso de erro
           setArticles(FALLBACK_ARTICLES);
-          
+          // Log para debug
+          if (typeof window !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.error('Erro ao buscar artigos da API:', err);
+          }
           if (err?.name === 'AbortError') {
             setError('A API demorou muito para responder. Mostrando artigos de exemplo.');
           } else if (err?.message?.includes('JSON')) {
