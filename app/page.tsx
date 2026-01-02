@@ -112,6 +112,9 @@ export default function Home() {
         setError(null);
 
         const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
+        
+        // DEBUG: Log da URL que está sendo chamada
+        console.log('🔍 [DEBUG] Fetching from:', `${BACKEND_URL}/api/articles?limit=10`);
 
         // Timeout de 30 segundos
         timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -123,16 +126,30 @@ export default function Home() {
 
         clearTimeout(timeoutId);
 
+        // DEBUG: Log da resposta
+        console.log('✅ [DEBUG] Response status:', res.status);
+        console.log('✅ [DEBUG] Response headers:', {
+          contentType: res.headers.get('content-type'),
+          cors: res.headers.get('access-control-allow-origin'),
+        });
+
         if (!res.ok) {
           throw new Error(`Falha ao carregar artigos (status ${res.status})`);
         }
 
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
+          console.error('❌ [DEBUG] Content-Type inválido:', contentType);
           throw new Error('API retornou resposta inválida (esperado JSON)');
         }
 
         const json = await res.json();
+        
+        // DEBUG: Log do JSON recebido
+        console.log('📦 [DEBUG] Data received:', json);
+        console.log('📦 [DEBUG] Articles array:', json?.articles);
+        console.log('📦 [DEBUG] Articles length:', json?.articles?.length);
+        
         const apiArticles = Array.isArray(json?.articles)
           ? json.articles.map((a: any) => ({
               id: a.id,
@@ -153,18 +170,28 @@ export default function Home() {
               readTime: '3 min',
             }))
           : [];
+        
+        // DEBUG: Log dos artigos processados
+        console.log('🎯 [DEBUG] Processed articles:', apiArticles);
+        console.log('🎯 [DEBUG] Will use fallback?', apiArticles.length === 0);
+        
         if (!canceled) {
           setArticles(apiArticles.length > 0 ? apiArticles as Article[] : FALLBACK_ARTICLES);
+          console.log('✅ [DEBUG] Articles set successfully!');
         }
       } catch (err: any) {
         if (!canceled) {
+          // DEBUG: Log completo do erro
+          console.error('❌ [DEBUG] ERRO COMPLETO:', {
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+            error: err,
+          });
+          
           // Usar artigos de fallback em caso de erro
           setArticles(FALLBACK_ARTICLES);
-          // Log para debug
-          if (typeof window !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.error('Erro ao buscar artigos da API:', err);
-          }
+          
           if (err?.name === 'AbortError') {
             setError('A API demorou muito para responder. Mostrando artigos de exemplo.');
           } else if (err?.message?.includes('JSON')) {
