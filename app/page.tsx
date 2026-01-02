@@ -115,6 +115,7 @@ export default function Home() {
         
         // DEBUG: Log da URL que está sendo chamada
         console.log('🔍 [DEBUG] Fetching from:', `${BACKEND_URL}/api/articles?limit=10`);
+        console.log('🔍 [DEBUG] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
 
         // Timeout de 30 segundos
         timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -128,6 +129,7 @@ export default function Home() {
 
         // DEBUG: Log da resposta
         console.log('✅ [DEBUG] Response status:', res.status);
+        console.log('✅ [DEBUG] Response URL:', res.url);
         console.log('✅ [DEBUG] Response headers:', {
           contentType: res.headers.get('content-type'),
           cors: res.headers.get('access-control-allow-origin'),
@@ -140,6 +142,8 @@ export default function Home() {
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
           console.error('❌ [DEBUG] Content-Type inválido:', contentType);
+          const text = await res.text();
+          console.error('❌ [DEBUG] Response body (primeiros 500 chars):', text.substring(0, 500));
           throw new Error('API retornou resposta inválida (esperado JSON)');
         }
 
