@@ -111,7 +111,16 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
+        // IMPORTANTE: Remover espaços e dois pontos extras da variável de ambiente
+        let BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
+        
+        // Limpar possíveis dois pontos ou espaços no início
+        if (BACKEND_URL.startsWith(': ')) {
+          BACKEND_URL = BACKEND_URL.substring(2).trim();
+        } else if (BACKEND_URL.startsWith(':')) {
+          BACKEND_URL = BACKEND_URL.substring(1).trim();
+        }
+        BACKEND_URL = BACKEND_URL.trim();
         
         // DEBUG: Log da URL que está sendo chamada
         console.log('🔍 [DEBUG] Fetching from:', `${BACKEND_URL}/api/articles?limit=10`);
