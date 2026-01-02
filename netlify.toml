@@ -5,3 +5,10 @@
 [build.environment]
   NODE_VERSION = "20"
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NEXT_PRIVATE_TARGET = "standalone"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  
+  [plugins.inputs]
+    disable = true
