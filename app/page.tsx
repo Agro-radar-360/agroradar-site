@@ -139,7 +139,7 @@ export default function Home() {
         const heroArticle = data.articles.find((a: Article) => a.position === 'hero');
         const latestArticles = data.articles
           .filter((a: Article) => a.position === 'latest')
-          .sort((a, b) => b.relevance_score - a.relevance_score);
+          .sort((a: Article, b: Article) => b.relevance_score - a.relevance_score);
         
         setHero(heroArticle || null);
         setArticles(latestArticles);
