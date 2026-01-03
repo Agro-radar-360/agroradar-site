@@ -1,255 +1,173 @@
-
-
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Article {
-  id?: string;
-  title?: string;
-  summary?: string;
-  category?: string;
-  image?: string;
-  date?: string;
-  author?: string;
-  readTime?: string;
+  id: number;
+  title: string;
+  content: string;
+  url: string;
+  source: string;
+  category: string;
+  tags: string;
+  image: string;
+  published_at: string;
+  urgency: "high" | "medium" | "low";
+  relevance_score: number;
+  position: "hero" | "latest";
 }
 
-// Artigos de fallback caso a API falhe
-const FALLBACK_ARTICLES: Article[] = [
-  {
-    id: '1',
-    title: 'Inovações em Agricultura de Precisão',
-    summary: 'Descubra como tecnologias de ponta estão transformando o agronegócio brasileiro com dados em tempo real...',
-    category: 'Tecnologia',
-    date: '31/12/24',
-    author: 'AGRO-RADAR',
-    readTime: '3 min',
-  },
-  {
-    id: '2',
-    title: 'Mercado de Commodities: Tendências 2025',
-    summary: 'Análise completa das perspectivas para soja, milho e café no mercado internacional...',
-    category: 'Mercado',
-    date: '30/12/24',
-    author: 'AGRO-RADAR',
-    readTime: '4 min',
-  },
-  {
-    id: '3',
-    title: 'Sustentabilidade no Campo',
-    summary: 'Práticas sustentáveis que aumentam a produtividade e preservam o meio ambiente...',
-    category: 'Sustentabilidade',
-    date: '29/12/24',
-    author: 'AGRO-RADAR',
-    readTime: '3 min',
-  },
-];
-
-// categorias serão derivadas dinamicamente a partir dos artigos
-
-function ArticleCard({ article }: { article: Article }) {
-  const imageSrc =
-    article.image ||
-    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAAA';
-
+function HeroArticle({ article }: { article: Article }) {
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-      <div className="relative h-48 overflow-hidden bg-gray-200">
-        <img
-          src={imageSrc}
-          alt={article.title || 'Artigo'}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+    <div className="mb-12 bg-white rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-shadow duration-300">
+      <div className="relative h-96">
+        <img 
+          src={article.image} 
+          alt={article.title}
+          className="w-full h-full object-cover"
         />
-        <div className="absolute top-3 right-3">
-          <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-            {article.category || 'Agronegócio'}
-          </span>
+        {article.urgency === 'high' && (
+          <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold shadow-lg">
+            🔥 URGENTE
+          </div>
+        )}
+        <div className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-full font-semibold shadow-lg">
+          {article.category}
         </div>
       </div>
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2">
-          {article.title || 'Sem título'}
-        </h3>
-        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-          {article.summary || 'Sem resumo disponível.'}
+      <div className="p-8">
+        <h2 className="text-4xl font-bold text-gray-900 mb-4">{article.title}</h2>
+        <p className="text-gray-700 text-lg mb-6 leading-relaxed">
+          {article.content.substring(0, 350)}...
         </p>
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex gap-2">
-            <span>{article.author || 'Autor desconhecido'}</span>
-            <span>•</span>
-            <span>{article.readTime || '—'}</span>
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            <span className="font-semibold">{article.source}</span>
+            {' • '}
+            <span>{new Date(article.published_at).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })}</span>
           </div>
-          <span>{article.date || ''}</span>
+          <a 
+            href={article.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+          >
+            Ler notícia completa →
+          </a>
         </div>
       </div>
     </div>
   );
 }
 
+function ArticleCard({ article }: { article: Article }) {
+  return (
+    <a 
+      href={article.url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden h-full">
+        <div className="relative h-48 overflow-hidden bg-gray-200">
+          <img 
+            src={article.image} 
+            alt={article.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          {article.urgency === 'high' && (
+            <div className="absolute top-2 left-2 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow">
+              🔥 URGENTE
+            </div>
+          )}
+          <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow">
+            {article.category}
+          </div>
+        </div>
+        <div className="p-4">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-green-600 transition-colors">
+            {article.title}
+          </h3>
+          <p className="text-gray-600 text-sm line-clamp-3 mb-3 leading-relaxed">
+            {article.content}
+          </p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span className="font-medium">{article.source}</span>
+            <span>{new Date(article.published_at).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: '2-digit'
+            })}</span>
+          </div>
+          {article.tags && (
+            <div className="mt-2 text-xs text-gray-400 line-clamp-1">
+              🏷️ {article.tags}
+            </div>
+          )}
+        </div>
+      </div>
+    </a>
+  );
+}
+
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [hero, setHero] = useState<Article | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    for (const a of articles) {
-      if (a?.category) set.add(a.category);
-    }
-    return ['Todos', ...Array.from(set).sort()];
-  }, [articles]);
-
   useEffect(() => {
+    const API_URL = 'https://agro-radar-360-3-0.onrender.com/api/output';
+    
     const controller = new AbortController();
-    let canceled = false;
-    let timeoutId: NodeJS.Timeout;
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // IMPORTANTE: Remover espaços e dois pontos extras da variável de ambiente
-        let BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agro-radar-360-3-0.onrender.com';
-        
-        // Limpar possíveis dois pontos ou espaços no início
-        if (BACKEND_URL.startsWith(': ')) {
-          BACKEND_URL = BACKEND_URL.substring(2).trim();
-        } else if (BACKEND_URL.startsWith(':')) {
-          BACKEND_URL = BACKEND_URL.substring(1).trim();
-        }
-        BACKEND_URL = BACKEND_URL.trim();
-        
-        // DEBUG: Log da URL que está sendo chamada
-        console.log('🔍 [DEBUG] Fetching from:', `${BACKEND_URL}/api/articles?limit=10`);
-        console.log('🔍 [DEBUG] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-
-        // Timeout de 30 segundos
-        timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        const res = await fetch(`${BACKEND_URL}/api/articles?limit=10`, {
-          signal: controller.signal,
-          headers: { Accept: 'application/json' },
-        });
-
+    fetch(API_URL, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' }
+    })
+      .then(res => {
         clearTimeout(timeoutId);
-
-        // DEBUG: Log da resposta
-        console.log('✅ [DEBUG] Response status:', res.status);
-        console.log('✅ [DEBUG] Response URL:', res.url);
-        console.log('✅ [DEBUG] Response headers:', {
-          contentType: res.headers.get('content-type'),
-          cors: res.headers.get('access-control-allow-origin'),
-        });
-
-        if (!res.ok) {
-          throw new Error(`Falha ao carregar artigos (status ${res.status})`);
-        }
-
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('❌ [DEBUG] Content-Type inválido:', contentType);
-          const text = await res.text();
-          console.error('❌ [DEBUG] Response body (primeiros 500 chars):', text.substring(0, 500));
-          throw new Error('API retornou resposta inválida (esperado JSON)');
-        }
-
-        const json = await res.json();
+        if (!res.ok) throw new Error(`API retornou status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const heroArticle = data.articles.find((a: Article) => a.position === 'hero');
+        const latestArticles = data.articles
+          .filter((a: Article) => a.position === 'latest')
+          .sort((a, b) => b.relevance_score - a.relevance_score);
         
-        // DEBUG: Log do JSON recebido
-        console.log('📦 [DEBUG] Data received:', json);
-        console.log('📦 [DEBUG] Articles array:', json?.articles);
-        console.log('📦 [DEBUG] Articles length:', json?.articles?.length);
-        
-        const apiArticles = Array.isArray(json?.articles)
-          ? json.articles.map((a: any) => ({
-              id: a.id,
-              title: a.title,
-              summary: a.content
-                ? a.content.substring(0, 150) + (a.content.length > 150 ? '...' : '')
-                : 'Sem resumo',
-              category: a.category || 'Agronegócio',
-              image: a.image,
-              date: a.published_at
-                ? new Date(a.published_at).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: '2-digit',
-                  })
-                : '',
-              author: 'AGRO-RADAR',
-              readTime: '3 min',
-            }))
-          : [];
-        
-        // DEBUG: Log dos artigos processados
-        console.log('🎯 [DEBUG] Processed articles:', apiArticles);
-        console.log('🎯 [DEBUG] Will use fallback?', apiArticles.length === 0);
-        
-        if (!canceled) {
-          setArticles(apiArticles.length > 0 ? apiArticles as Article[] : FALLBACK_ARTICLES);
-          console.log('✅ [DEBUG] Articles set successfully!');
-        }
-      } catch (err: any) {
-        if (!canceled) {
-          // DEBUG: Log completo do erro
-          console.error('❌ [DEBUG] ERRO COMPLETO:', {
-            name: err?.name,
-            message: err?.message,
-            stack: err?.stack,
-            error: err,
-          });
-          
-          // Usar artigos de fallback em caso de erro
-          setArticles(FALLBACK_ARTICLES);
-          
-          if (err?.name === 'AbortError') {
-            setError('A API demorou muito para responder. Mostrando artigos de exemplo.');
-          } else if (err?.message?.includes('JSON')) {
-            setError('Erro ao processar resposta da API. Mostrando artigos de exemplo.');
-          } else {
-            setError(err?.message || 'Erro ao carregar artigos. Mostrando artigos de exemplo.');
-          }
-        }
-      } finally {
-        if (!canceled) {
-          setLoading(false);
-        }
+        setHero(heroArticle || null);
+        setArticles(latestArticles);
+        setLoading(false);
+      })
+      .catch(err => {
         clearTimeout(timeoutId);
-      }
-    }
+        console.error('Erro ao carregar artigos:', err);
+        setError('Não foi possível carregar as notícias. Tente novamente mais tarde.');
+        setLoading(false);
+      });
 
-    load();
     return () => {
-      canceled = true;
       controller.abort();
       clearTimeout(timeoutId);
     };
   }, []);
 
-  const filteredArticles =
-    selectedCategory === 'Todos'
-      ? articles
-      : articles.filter((a) => a.category === selectedCategory);
-
-  useEffect(() => {
-    if (selectedCategory !== 'Todos' && !categories.includes(selectedCategory)) {
-      setSelectedCategory('Todos');
-    }
-  }, [categories, selectedCategory]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-green-700 to-green-500 text-white py-8">
+      <header className="bg-gradient-to-r from-green-700 to-green-500 text-white py-8 shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-4xl">🌾</span>
             <h1 className="text-4xl font-bold">AGRO-RADAR 360</h1>
           </div>
-          <p className="text-green-100">
+          <p className="text-green-100 text-lg">
             Notícias e análises do agronegócio em tempo real
           </p>
         </div>
@@ -257,56 +175,49 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-12">
-        {/* Category Filter */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Categorias</h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full font-semibold transition-colors duration-200 ${
-                  selectedCategory === category
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-600'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Estados de carregamento/erro */}
         {loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">Carregando artigos...</p>
-          </div>
-        )}
-        {error && (
-          <div className="text-center py-12">
-            <p className="text-red-600 text-lg">{error}</p>
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <p className="text-gray-600 mt-4 text-lg">Carregando notícias...</p>
           </div>
         )}
 
-        {/* Articles Grid */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            {selectedCategory === 'Todos' ? 'Todas as notícias' : `Notícias - ${selectedCategory}`}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArticles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
+        {error && (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">⚠️</div>
+            <p className="text-red-600 text-lg font-semibold">{error}</p>
           </div>
-          {!loading && !error && filteredArticles.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">
-                Nenhum artigo disponível no momento.
-              </p>
-            </div>
-          )}
-        </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Hero Article */}
+            {hero && <HeroArticle article={hero} />}
+
+            {/* Latest Articles */}
+            {articles.length > 0 && (
+              <>
+                <h2 className="text-3xl font-bold text-gray-900 mb-8">
+                  📰 Últimas Notícias
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {articles.map(article => (
+                    <ArticleCard key={article.id} article={article} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!hero && articles.length === 0 && (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-gray-600 text-lg">
+                  Nenhum artigo disponível no momento.
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </main>
 
       {/* Footer */}
@@ -322,22 +233,22 @@ export default function Home() {
             <div>
               <h3 className="text-white font-bold mb-3">Links Rápidos</h3>
               <ul className="text-sm space-y-2">
-                <li><a href="#" className="hover:text-green-400">Home</a></li>
-                <li><a href="#" className="hover:text-green-400">Sobre</a></li>
-                <li><a href="#" className="hover:text-green-400">Contato</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">Home</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">Sobre</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">Contato</a></li>
               </ul>
             </div>
             <div>
               <h3 className="text-white font-bold mb-3">Redes Sociais</h3>
               <ul className="text-sm space-y-2">
-                <li><a href="#" className="hover:text-green-400">Twitter</a></li>
-                <li><a href="#" className="hover:text-green-400">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-green-400">Instagram</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">Twitter</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">LinkedIn</a></li>
+                <li><a href="#" className="hover:text-green-400 transition-colors">Instagram</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; 2024 AGRO-RADAR 360. Todos os direitos reservados.</p>
+            <p>&copy; 2026 AGRO-RADAR 360. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
